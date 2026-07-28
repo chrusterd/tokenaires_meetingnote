@@ -2,6 +2,8 @@
 
 텍스트 회의 메모를 구조화하고, 사람이 검토한 뒤 Notion의 회의록·액션 아이템 DB에 저장하는 Netlify 앱입니다.
 
+구조화에는 Gemini `gemini-3.6-flash`와 JSON Schema 기반 구조화 출력을 사용합니다.
+
 ## 시작하기
 
 ```powershell
@@ -21,7 +23,7 @@ netlify dev
 `.env.example`을 `.env`로 복사해 아래 값을 채웁니다. `.env`는 Git에 포함되지 않습니다.
 
 ```dotenv
-GROQ_API_KEY=
+GEMINI_API_KEY=
 NOTION_TOKEN=ntn_...
 NOTION_MEETINGS_DB=
 NOTION_ACTIONS_DB=
@@ -49,4 +51,4 @@ npm run roundtrip
 
 ## 배포
 
-Netlify 사이트 환경 변수에 `GROQ_API_KEY`, `NOTION_TOKEN`, `NOTION_MEETINGS_DB`, `NOTION_ACTIONS_DB`를 등록한 뒤 배포합니다. 브라우저 환경 변수로 노출하지 마세요.
+Netlify 사이트 환경 변수에 `GEMINI_API_KEY`, `NOTION_TOKEN`, `NOTION_MEETINGS_DB`, `NOTION_ACTIONS_DB`를 등록한 뒤 배포합니다. 브라우저 환경 변수로 노출하지 마세요.

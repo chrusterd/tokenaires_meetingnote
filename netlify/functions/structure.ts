@@ -2,42 +2,74 @@ import type { Config } from '@netlify/functions'
 import { validateMeetingRecord } from '../../shared/contract'
 import { parseModelResponse, SYSTEM_PROMPT } from './_lib/structure-prompt'
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const MODEL = 'llama-3.3-70b-versatile'
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
+export const GEMINI_MODEL = 'gemini-3.6-flash'
 const MAX_ATTEMPTS = 3
 
-type GroqResponse = {
-  choices?: Array<{ message?: { content?: string } }>
+type GeminiResponse = {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>
   error?: { message?: string }
 }
 
-async function callGroq(text: string): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY?.trim()
-  if (!apiKey) throw new Error('GROQ_API_KEY 환경 변수가 설정되지 않았습니다')
+const MEETING_STRUCTURE_SCHEMA = {
+  type: 'object',
+  properties: {
+    핵심_요약: { type: 'string', description: '회의 전체의 핵심을 3줄 이내로 요약한 문자열' },
+    안건_태그: {
+      type: 'array',
+      items: { type: 'string', enum: ['기획', '개발', '디자인', '기타'] },
+      description: '회의에서 다룬 안건 태그',
+    },
+    결정사항: { type: 'array', items: { type: 'string' }, description: '확정된 결정만 담은 목록' },
+    액션아이템: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          할일: { type: 'string' },
+          담당자: { type: 'string', description: '명시되지 않았으면 미정' },
+          기한: { type: 'string', description: 'YYYY-MM-DD 또는 미정' },
+        },
+        required: ['할일', '담당자', '기한'],
+      },
+      description: '회의에서 명시된 실행 항목',
+    },
+    논의_요약: { type: 'array', items: { type: 'string' }, description: '결론이 나지 않았거나 보류한 논의' },
+  },
+  required: ['핵심_요약', '안건_태그', '결정사항', '액션아이템', '논의_요약'],
+} as const
 
-  const response = await fetch(GROQ_URL, {
+async function callGemini(text: string): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim()
+  if (!apiKey) throw new Error('GEMINI_API_KEY 환경 변수가 설정되지 않았습니다')
+
+  const response = await fetch(`${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      'x-goog-api-key': apiKey,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.2,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: text },
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [
+        { role: 'user', parts: [{ text }] },
       ],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: 'application/json',
+        responseSchema: MEETING_STRUCTURE_SCHEMA,
+      },
     }),
   })
 
-  const body = await response.json() as GroqResponse
-  if (!response.ok) throw new Error(`Groq ${response.status}: ${body.error?.message ?? '알 수 없는 오류'}`)
+  const body = await response.json() as GeminiResponse
+  if (!response.ok) throw new Error(`Gemini ${response.status}: ${body.error?.message ?? '알 수 없는 오류'}`)
 
-  const content = body.choices?.[0]?.message?.content
+  const content = body.candidates?.[0]?.content?.parts
+    ?.map((part) => part.text ?? '')
+    .join('')
   if (typeof content !== 'string' || !content.trim()) {
-    throw new Error('Groq 응답에 구조화 결과가 없습니다')
+    throw new Error('Gemini 응답에 구조화 결과가 없습니다')
   }
   return content
 }
@@ -71,7 +103,7 @@ export default async (request: Request) => {
   let lastValidationErrors: string[] = []
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     try {
-      lastRaw = await callGroq(텍스트)
+      lastRaw = await callGemini(텍스트)
       const parsed = parseModelResponse(lastRaw)
       const modelRecord = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
         ? parsed as Record<string, unknown>
