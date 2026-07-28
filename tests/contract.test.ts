@@ -13,7 +13,7 @@ describe('validateMeetingRecord', () => {
   })
 
   it('필수 키가 없으면 실패하고 어떤 키인지 알려준다', () => {
-    const { 결정사항, ...missing } = dummy as Record<string, unknown>
+    const { 결정사항: _결정사항, ...missing } = dummy as Record<string, unknown>
     const result = validateMeetingRecord(missing)
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.join()).toContain('결정사항')
