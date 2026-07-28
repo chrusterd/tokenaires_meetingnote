@@ -45,7 +45,11 @@ export function validateMeetingRecord(value: unknown): ValidationResult {
     const v = raw[key]
     if (v === undefined) { errors.push(`${key} 누락`); return [] }
     if (!Array.isArray(v)) { errors.push(`${key}는 배열이어야 합니다`); return [] }
-    return v.map(String)
+    if (v.some((el) => typeof el !== 'string')) {
+      errors.push(`${key}는 문자열 배열이어야 합니다`)
+      return []
+    }
+    return v as string[]
   }
 
   const 날짜 = typeof raw.날짜 === 'string' ? raw.날짜 : ''
@@ -64,11 +68,17 @@ export function validateMeetingRecord(value: unknown): ValidationResult {
   if (!Array.isArray(raw.액션아이템)) {
     errors.push('액션아이템 누락')
   } else {
-    액션아이템 = raw.액션아이템.map((item) => {
-      const o = (item ?? {}) as Record<string, unknown>
+    액션아이템 = raw.액션아이템.map((item, i) => {
+      if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+        errors.push(`액션아이템[${i}]은 객체여야 합니다`)
+        return { 할일: '', 담당자: UNSET, 기한: UNSET }
+      }
+      const o = item as Record<string, unknown>
+      const 할일 = typeof o.할일 === 'string' ? o.할일 : ''
+      if (!할일.trim()) errors.push(`액션아이템[${i}].할일 누락`)
       const 기한 = typeof o.기한 === 'string' ? o.기한.trim() : ''
       return {
-        할일: typeof o.할일 === 'string' ? o.할일 : '',
+        할일,
         담당자: typeof o.담당자 === 'string' && o.담당자.trim() ? o.담당자.trim() : UNSET,
         기한: 기한 && DATE_RE.test(기한) ? 기한 : UNSET,
       }
