@@ -1,122 +1,96 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import type { ActionItem, MeetingRecord } from '../shared/contract'
+import { createNotionPage } from './api'
+import { ActionDashboard } from './components/ActionDashboard'
+import { InputScreen } from './components/InputScreen'
+import { ResultScreen } from './components/ResultScreen'
+import { ReviewScreen } from './components/ReviewScreen'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+type Screen = 'input' | 'review' | 'result' | 'dashboard'
+
+const workflow = [
+  { id: 'input', label: '메모' },
+  { id: 'review', label: '검토' },
+  { id: 'result', label: '기록' },
+] as const
+
+export default function App() {
+  const [screen, setScreen] = useState<Screen>('input')
+  const [record, setRecord] = useState<MeetingRecord | null>(null)
+  const [pageId, setPageId] = useState('')
+  const [pageUrl, setPageUrl] = useState('')
+  const [failedItems, setFailedItems] = useState<ActionItem[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const save = async (edited: MeetingRecord) => {
+    setIsSaving(true)
+    setError('')
+    try {
+      const result = await createNotionPage(edited)
+      setRecord(edited)
+      setPageId(result.pageId)
+      setPageUrl(result.pageUrl)
+      setFailedItems(result.failedItems)
+      setScreen('result')
+    } catch (saveError) {
+      setError(`Notion에 기록하지 못했습니다: ${(saveError as Error).message}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const retryFailedItems = async () => {
+    if (!record || !pageId || failedItems.length === 0) return
+    setIsSaving(true)
+    setError('')
+    try {
+      const result = await createNotionPage({ ...record, 액션아이템: failedItems }, pageId)
+      setFailedItems(result.failedItems)
+    } catch (retryError) {
+      setError(`실패한 항목을 다시 기록하지 못했습니다: ${(retryError as Error).message}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const startNewMeeting = () => {
+    setRecord(null)
+    setPageId('')
+    setPageUrl('')
+    setFailedItems([])
+    setError('')
+    setScreen('input')
+  }
+
+  const currentWorkflowIndex = workflow.findIndex((step) => step.id === screen)
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app-shell">
+      <header className="app-header">
+        <button className="wordmark" type="button" onClick={startNewMeeting} aria-label="새 회의록 만들기">회의록<span>:</span>기록</button>
+        <nav aria-label="주요 메뉴">
+          <button type="button" className={screen !== 'dashboard' ? 'is-active' : ''} onClick={startNewMeeting}>회의 기록</button>
+          <button type="button" className={screen === 'dashboard' ? 'is-active' : ''} onClick={() => setScreen('dashboard')}>할 일</button>
+        </nav>
+      </header>
 
-      <div className="ticks"></div>
+      {screen !== 'dashboard' && (
+        <ol className="workflow" aria-label="회의록 작성 단계">
+          {workflow.map((step, index) => <li className={index <= currentWorkflowIndex ? 'is-complete' : ''} key={step.id}><span>{index + 1}</span>{step.label}</li>)}
+        </ol>
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <main>
+        {error && <p className="global-error" role="alert">{error}</p>}
+        {screen === 'input' && <InputScreen onStructured={(structured) => { setError(''); setRecord(structured); setScreen('review') }} />}
+        {screen === 'review' && record && <ReviewScreen record={record} onBack={() => setScreen('input')} onApprove={(edited) => void save(edited)} isSaving={isSaving} />}
+        {screen === 'result' && record && <ResultScreen pageUrl={pageUrl} record={record} failedItems={failedItems} onRetryFailed={() => void retryFailedItems()} onNew={startNewMeeting} isSaving={isSaving} />}
+        {screen === 'dashboard' && <ActionDashboard />}
+      </main>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <footer>원본 메모 → AI 정리 → 사람 검토 → Notion 기록</footer>
+    </div>
   )
 }
-
-export default App

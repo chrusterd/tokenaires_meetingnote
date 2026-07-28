@@ -7,6 +7,7 @@ export const NOTION_VERSION = '2022-06-28'
 
 const NOTION_API_BASE = 'https://api.notion.com/v1'
 const RATE_LIMIT_DELAY_MS = 350
+let nextNotionRequestAt = 0
 
 type NotionPage = {
   id: string
@@ -18,6 +19,13 @@ type NotionError = {
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+async function waitForNotionRequestSlot() {
+  const now = Date.now()
+  const scheduledAt = Math.max(now, nextNotionRequestAt)
+  nextNotionRequestAt = scheduledAt + RATE_LIMIT_DELAY_MS
+  await sleep(scheduledAt - now)
+}
 
 function requiredEnvironment(name: 'NOTION_TOKEN' | 'NOTION_MEETINGS_DB' | 'NOTION_ACTIONS_DB') {
   const value = process.env[name]?.trim()
@@ -38,6 +46,7 @@ async function readJson(response: Response): Promise<unknown> {
 
 export async function notionFetch(path: string, init: RequestInit = {}): Promise<unknown> {
   const token = requiredEnvironment('NOTION_TOKEN')
+  await waitForNotionRequestSlot()
   const response = await fetch(`${NOTION_API_BASE}${path}`, {
     ...init,
     headers: {
@@ -82,7 +91,6 @@ export async function createMeeting(
 
   const failedItems: ActionItem[] = []
   for (const item of record.액션아이템) {
-    await sleep(RATE_LIMIT_DELAY_MS)
     try {
       await notionFetch('/pages', {
         method: 'POST',
