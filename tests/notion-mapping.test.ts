@@ -43,6 +43,50 @@ describe('buildMeetingPage', () => {
   it('children이 100블록을 넘지 않는다', () => {
     expect(page.children.length).toBeLessThanOrEqual(100)
   })
+
+  it('2000자를 넘는 전사문도 한 블록의 rich_text 런에 걸쳐 전부 보존된다', () => {
+    const bigText = '가'.repeat(5000)
+    const bigRecord: MeetingRecord = { ...record, 전사문: bigText }
+    const bigPage = buildMeetingPage(bigRecord, 'DB1') as any
+    const toggle = bigPage.children.find((b: any) => b.type === 'toggle')
+    // 블록 하나에 런 3개가 들어가야 한다 (블록 3개로 쪼개는 게 아니라)
+    expect(toggle.toggle.children).toHaveLength(1)
+    const runs = toggle.toggle.children.flatMap((b: any) => b.paragraph.rich_text)
+    const joined = runs.map((r: any) => r.text.content).join('')
+    expect(joined).toBe(bigText)
+  })
+
+  it('20만자를 넘으면 잘리되 잘렸다는 표시 블록을 남긴다', () => {
+    const huge = '가'.repeat(200_001) // 101 런 > RICH_TEXT_RUNS_LIMIT(100)
+    const hugeRecord: MeetingRecord = { ...record, 전사문: huge }
+    const hugePage = buildMeetingPage(hugeRecord, 'DB1') as any
+    const toggle = hugePage.children.find((b: any) => b.type === 'toggle')
+    expect(toggle.toggle.children).toHaveLength(2)
+    expect(toggle.toggle.children[0].paragraph.rich_text).toHaveLength(100)
+    expect(JSON.stringify(toggle.toggle.children[1])).toContain('원본 길이')
+  })
+
+  it('결정사항/논의_요약이 블록 예산을 넘어도 전사문 토글은 살아남는다', () => {
+    const bigRecord: MeetingRecord = {
+      ...record,
+      결정사항: Array.from({ length: 60 }, (_, i) => `결정 ${i}`),
+      논의_요약: Array.from({ length: 60 }, (_, i) => `논의 ${i}`),
+    }
+    const bigPage = buildMeetingPage(bigRecord, 'DB1') as any
+    const toggle = bigPage.children.find((b: any) => b.type === 'toggle')
+    expect(toggle).toBeDefined()
+    expect(JSON.stringify(toggle)).toContain('회의록 자동화 어디까지')
+  })
+
+  it('블록 예산이 실제로 걸리는 경우에도 children이 100을 넘지 않는다', () => {
+    const bigRecord: MeetingRecord = {
+      ...record,
+      결정사항: Array.from({ length: 60 }, (_, i) => `결정 ${i}`),
+      논의_요약: Array.from({ length: 60 }, (_, i) => `논의 ${i}`),
+    }
+    const bigPage = buildMeetingPage(bigRecord, 'DB1') as any
+    expect(bigPage.children.length).toBeLessThanOrEqual(100)
+  })
 })
 
 describe('buildActionItemPage', () => {
