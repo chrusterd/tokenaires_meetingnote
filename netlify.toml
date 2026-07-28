@@ -1,0 +1,20 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# /api/* 를 SPA 캐치올보다 반드시 위에 둔다.
+# 순서가 뒤바뀌면 함수 호출에 index.html이 돌아오고,
+# 프론트에서 res.json()이 "Unexpected token '<'"로 터진다.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
