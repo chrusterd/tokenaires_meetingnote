@@ -4,6 +4,9 @@ export type ScheduleKind = typeof SCHEDULE_KINDS[number]
 export const SCHEDULE_STATUSES = ['진행', '완료'] as const
 export type ScheduleStatus = typeof SCHEDULE_STATUSES[number]
 
+export const MEETING_STATUSES = ['진행 예정', '진행 중', '완료'] as const
+export type MeetingStatus = typeof MEETING_STATUSES[number]
+
 export interface ActionItem {
   // id는 공용 저장소가 부여한다. 모델이 만든 새 회의록에는 아직 없을 수 있다.
   id?: string
@@ -18,6 +21,8 @@ export interface MeetingRecord {
   날짜: string     // "YYYY-MM-DD"
   참석자: string[]
   안건_태그: string[]
+  제목: string     // Notion 회의명("[M/D] 제목")에 쓰이는 짧은 요약 제목
+  상태: MeetingStatus  // Notion "상태" select 속성. 검토 화면에서 사람이 고른다.
   핵심_요약: string
   결정사항: string[]
   액션아이템: ActionItem[]
@@ -36,10 +41,19 @@ export function scheduleStatusOf(item: Pick<ActionItem, '상태'>): ScheduleStat
   return item.상태 === '완료' ? '완료' : '진행'
 }
 
+/** "2026-07-29" → "7/29". Notion 회의명("[M/D] 제목")과 그 미리보기에 쓰는 짧은 날짜 표기. */
+export function shortDate(날짜: string): string {
+  const match = 날짜.match(/^\d{4}-(\d{2})-(\d{2})$/)
+  if (!match) return 날짜
+  return `${Number(match[1])}/${Number(match[2])}`
+}
+
 export const EMPTY_RECORD: MeetingRecord = {
   날짜: new Date().toISOString().slice(0, 10),
   참석자: [],
   안건_태그: [],
+  제목: '',
+  상태: '완료',
   핵심_요약: '',
   결정사항: [],
   액션아이템: [],
@@ -83,6 +97,11 @@ export function validateMeetingRecord(value: unknown): ValidationResult {
     ? stringArray('논의_요약')
     : stringArray('논의_기록')
 
+  const 상태 = typeof raw.상태 === 'string' && MEETING_STATUSES.includes(raw.상태 as MeetingStatus)
+    ? raw.상태 as MeetingStatus
+    : '완료'
+
+  if (typeof raw.제목 !== 'string') errors.push('제목 누락')
   if (typeof raw.핵심_요약 !== 'string') errors.push('핵심_요약 누락')
   if (typeof raw.전사문 !== 'string') errors.push('전사문 누락')
 
@@ -126,6 +145,8 @@ export function validateMeetingRecord(value: unknown): ValidationResult {
       날짜,
       참석자,
       안건_태그,
+      제목: raw.제목 as string,
+      상태,
       핵심_요약: raw.핵심_요약 as string,
       결정사항,
       액션아이템,

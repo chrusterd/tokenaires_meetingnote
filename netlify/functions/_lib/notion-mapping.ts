@@ -1,5 +1,5 @@
 import type { MeetingRecord, ActionItem } from '../../../shared/contract'
-import { scheduleKindOf, scheduleStatusOf, UNSET } from '../../../shared/contract'
+import { scheduleKindOf, scheduleStatusOf, shortDate, UNSET } from '../../../shared/contract'
 
 const RICH_TEXT_LIMIT = 2000
 const MAX_CHILDREN = 100
@@ -83,7 +83,7 @@ function buildTranscriptChildren(text: string): object[] {
   ]
 }
 
-export function buildMeetingPage(record: MeetingRecord, databaseId: string) {
+export function buildMeetingPage(record: MeetingRecord, databaseId: string, savedAt: string) {
   const toggle = {
     object: 'block', type: 'toggle',
     toggle: {
@@ -122,12 +122,17 @@ export function buildMeetingPage(record: MeetingRecord, databaseId: string) {
     toggle,
   ]
 
+  // 모델이 빈 제목을 준 경우를 대비한 안전망. 핵심_요약 앞부분으로 대신한다.
+  const titleText = record.제목.trim() || record.핵심_요약.trim().slice(0, 30) || '회의록'
+
   return {
     parent: { database_id: databaseId },
     properties: {
-      // 실제 1.회의록 DB의 필수 속성만 쓴다. 참석자·안건은 본문에 보존한다.
-      '회의명': { title: [{ type: 'text', text: { content: `${record.날짜} 회의록` } }] },
-      '날짜': { date: { start: record.날짜 } },
+      '회의명': { title: [{ type: 'text', text: { content: `[${shortDate(record.날짜)}] ${titleText}` } }] },
+      // savedAt은 Notion 저장(승인) 시각이다. 회의 날짜(record.날짜)는 제목의 대괄호에 남는다.
+      '날짜': { date: { start: savedAt } },
+      '참여자': { multi_select: record.참석자.map((name) => ({ name })) },
+      '상태': { select: { name: record.상태 } },
       '내용': { rich_text: splitRichText(record.핵심_요약) },
     },
     children,

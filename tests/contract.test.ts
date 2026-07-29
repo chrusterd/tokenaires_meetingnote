@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { validateMeetingRecord, EMPTY_RECORD } from '../shared/contract'
+import { validateMeetingRecord, EMPTY_RECORD, shortDate } from '../shared/contract'
 import dummy from '../fixtures/dummy-meeting.json'
 
 describe('validateMeetingRecord', () => {
@@ -73,5 +73,35 @@ describe('validateMeetingRecord', () => {
   it('참석자 배열에 문자열이 아닌 원소가 있으면 실패한다', () => {
     const result = validateMeetingRecord({ ...dummy, 참석자: [{ a: 1 }] })
     expect(result.ok).toBe(false)
+  })
+
+  it('상태가 없으면 완료로 채운다', () => {
+    const { 상태: _상태, ...withoutStatus } = dummy as Record<string, unknown>
+    const result = validateMeetingRecord(withoutStatus)
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.value.상태).toBe('완료')
+  })
+
+  it('상태가 유효하지 않은 값이면 완료로 채운다', () => {
+    const result = validateMeetingRecord({ ...dummy, 상태: '보류' })
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.value.상태).toBe('완료')
+  })
+
+  it('상태가 유효한 값이면 그대로 통과한다', () => {
+    const result = validateMeetingRecord({ ...dummy, 상태: '진행 중' })
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.value.상태).toBe('진행 중')
+  })
+})
+
+describe('shortDate', () => {
+  it('"YYYY-MM-DD"를 앞자리 0 없는 "M/D"로 줄인다', () => {
+    expect(shortDate('2026-07-29')).toBe('7/29')
+    expect(shortDate('2026-01-05')).toBe('1/5')
+  })
+
+  it('형식이 맞지 않으면 원본을 그대로 돌려준다', () => {
+    expect(shortDate('2026/07/29')).toBe('2026/07/29')
   })
 })

@@ -1,5 +1,5 @@
-import type { ActionItem, MeetingRecord } from '../../../shared/contract'
-import { scheduleKindOf, UNSET, validateMeetingRecord } from '../../../shared/contract'
+import type { ActionItem, MeetingRecord, MeetingStatus } from '../../../shared/contract'
+import { MEETING_STATUSES, scheduleKindOf, UNSET, validateMeetingRecord } from '../../../shared/contract'
 import { buildActionTable, buildMeetingPage } from './notion-mapping'
 
 // This app deliberately stays on the pre-data-source Notion API contract.
@@ -43,6 +43,7 @@ type NotionProperty = {
   rich_text?: NotionRichText[]
   date?: { start?: string | null }
   multi_select?: Array<{ name?: string }>
+  select?: { name?: string } | null
 }
 
 type NotionDatabasePage = NotionPage & {
@@ -64,6 +65,7 @@ export type NotionMeetingPage = {
   lastEditedAt: string
   날짜: string
   제목: string
+  상태: MeetingStatus
   핵심_요약: string
   안건_태그: string[]
 }
@@ -168,6 +170,11 @@ function propertyDate(page: NotionDatabasePage) {
   return page.properties['날짜']?.date?.start?.slice(0, 10) ?? page.created_time.slice(0, 10)
 }
 
+function propertyStatus(page: NotionDatabasePage): MeetingStatus {
+  const name = page.properties['상태']?.select?.name
+  return name && MEETING_STATUSES.includes(name as MeetingStatus) ? name as MeetingStatus : '완료'
+}
+
 function propertyTags(page: NotionDatabasePage) {
   const property = page.properties['안건 태그'] ?? page.properties['안건_태그']
   return property?.multi_select?.map((option) => option.name?.trim()).filter((name): name is string => Boolean(name)) ?? []
@@ -210,6 +217,7 @@ export async function listNotionMeetingPages(): Promise<NotionMeetingPage[]> {
     lastEditedAt: page.last_edited_time,
     날짜: propertyDate(page),
     제목: propertyText(page, ['회의명', '제목', 'Name'], 'title'),
+    상태: propertyStatus(page),
     핵심_요약: propertyText(page, ['내용', '핵심 요약', '핵심_요약'], 'rich_text'),
     안건_태그: propertyTags(page),
   }))
@@ -297,11 +305,16 @@ export async function readNotionMeetingRecord(page: NotionMeetingPage): Promise<
     }
   }
 
+  // 회의명은 "[M/D] 제목" 형식으로 저장된다. 앞의 날짜 대괄호를 떼어 원래 제목만 남긴다.
+  const 제목 = page.제목.replace(/^\[\d{1,2}\/\d{1,2}\]\s*/, '')
+
   const parsed = validateMeetingRecord({
     날짜: page.날짜,
     참석자: [...new Set(참석자)],
     안건_태그: page.안건_태그,
-    핵심_요약: page.핵심_요약 || page.제목 || `${page.날짜} 회의록`,
+    제목,
+    상태: page.상태,
+    핵심_요약: page.핵심_요약 || 제목 || `${page.날짜} 회의록`,
     결정사항,
     액션아이템,
     논의_기록,
@@ -347,6 +360,7 @@ export async function createMeeting(
   existingPageId?: string,
 ): Promise<{ pageId: string; pageUrl: string; failedItems: ActionItem[] }> {
   const meetingsDatabaseId = requiredEnvironment('NOTION_MEETINGS_DB')
+  const savedAt = new Date().toISOString()
 
   const page = existingPageId
     ? {
@@ -355,7 +369,7 @@ export async function createMeeting(
       }
     : await notionFetch('/pages', {
         method: 'POST',
-        body: JSON.stringify(buildMeetingPage(record, meetingsDatabaseId)),
+        body: JSON.stringify(buildMeetingPage(record, meetingsDatabaseId, savedAt)),
       }) as NotionPage
 
   return { pageId: page.id, pageUrl: page.url, failedItems: [] }
