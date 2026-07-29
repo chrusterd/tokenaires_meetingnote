@@ -1,5 +1,5 @@
 import type { MeetingRecord, ActionItem } from '../../../shared/contract'
-import { scheduleKindOf, scheduleStatusOf, UNSET } from '../../../shared/contract'
+import { scheduleKindOf, scheduleStatusOf, shortDate, UNSET } from '../../../shared/contract'
 
 const RICH_TEXT_LIMIT = 2000
 const MAX_CHILDREN = 100
@@ -81,13 +81,6 @@ function buildTranscriptChildren(text: string): object[] {
     block,
     paragraph(`(전사문이 길어 앞 ${shownChars}자만 표시했습니다. 원본 길이: ${text.length}자)`),
   ]
-}
-
-/** "2026-07-29" → "7/29". 회의명 제목의 대괄호 안에 쓰는 짧은 날짜 표기. */
-function shortDate(날짜: string): string {
-  const match = 날짜.match(/^\d{4}-(\d{2})-(\d{2})$/)
-  if (!match) return 날짜
-  return `${Number(match[1])}/${Number(match[2])}`
 }
 
 export function buildMeetingPage(record: MeetingRecord, databaseId: string, savedAt: string) {

@@ -1,16 +1,9 @@
 import { useState } from 'react'
 import type { ActionItem, MeetingRecord } from '../../shared/contract'
-import { MEETING_STATUSES, scheduleKindOf, SCHEDULE_KINDS, UNSET } from '../../shared/contract'
+import { MEETING_STATUSES, scheduleKindOf, SCHEDULE_KINDS, shortDate, UNSET } from '../../shared/contract'
 
 const TEAM_MEMBERS = [UNSET, '소정', '하영', '해냄', '유진']
 type ReviewedActionItem = ActionItem & { 포함: boolean }
-
-/** "2026-07-29" → "7/29". Notion 회의명 미리보기에 쓰는 짧은 날짜 표기. */
-function shortDate(날짜: string): string {
-  const match = 날짜.match(/^\d{4}-(\d{2})-(\d{2})$/)
-  if (!match) return 날짜
-  return `${Number(match[1])}/${Number(match[2])}`
-}
 
 function StringListEditor({
   title,

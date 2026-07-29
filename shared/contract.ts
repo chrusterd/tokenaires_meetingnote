@@ -41,6 +41,13 @@ export function scheduleStatusOf(item: Pick<ActionItem, '상태'>): ScheduleStat
   return item.상태 === '완료' ? '완료' : '진행'
 }
 
+/** "2026-07-29" → "7/29". Notion 회의명("[M/D] 제목")과 그 미리보기에 쓰는 짧은 날짜 표기. */
+export function shortDate(날짜: string): string {
+  const match = 날짜.match(/^\d{4}-(\d{2})-(\d{2})$/)
+  if (!match) return 날짜
+  return `${Number(match[1])}/${Number(match[2])}`
+}
+
 export const EMPTY_RECORD: MeetingRecord = {
   날짜: new Date().toISOString().slice(0, 10),
   참석자: [],
