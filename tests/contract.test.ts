@@ -12,6 +12,13 @@ describe('validateMeetingRecord', () => {
     expect(validateMeetingRecord(EMPTY_RECORD).ok).toBe(true)
   })
 
+  it('기존 논의_요약 레코드를 논의_기록으로 읽는다', () => {
+    const { 논의_기록: _논의기록, ...legacy } = dummy as Record<string, unknown>
+    const result = validateMeetingRecord({ ...legacy, 논의_요약: ['이전 회의 논의'] })
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.value.논의_기록).toEqual(['이전 회의 논의'])
+  })
+
   it('필수 키가 없으면 실패하고 어떤 키인지 알려준다', () => {
     const { 결정사항: _결정사항, ...missing } = dummy as Record<string, unknown>
     const result = validateMeetingRecord(missing)
@@ -26,6 +33,8 @@ describe('validateMeetingRecord', () => {
     if (result.ok) {
       expect(result.value.액션아이템[0].담당자).toBe('미정')
       expect(result.value.액션아이템[0].기한).toBe('미정')
+      expect(result.value.액션아이템[0].유형).toBe('팀 일정')
+      expect(result.value.액션아이템[0].상태).toBe('진행')
     }
   })
 
@@ -41,6 +50,8 @@ describe('validateMeetingRecord', () => {
       expect(result.value.액션아이템[0].할일).toBe('Notion 액션아이템 DB 신설')
       expect(result.value.액션아이템[0].담당자).toBe('소정')
       expect(result.value.액션아이템[0].기한).toBe('2026-08-04')
+      expect(result.value.액션아이템[0].유형).toBe('개인 일정')
+      expect(result.value.액션아이템[0].상태).toBe('진행')
       expect(result.value.참석자).toEqual(['소정', '하영', '해냄', '유진'])
     }
   })

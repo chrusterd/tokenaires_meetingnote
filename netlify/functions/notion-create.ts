@@ -1,9 +1,12 @@
 import type { Config } from '@netlify/functions'
 import { validateMeetingRecord } from '../../shared/contract'
+import { requireSitePassword } from './_lib/access'
 import { createMeeting } from './_lib/notion'
 
 export default async (request: Request) => {
   if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 })
+  const denied = requireSitePassword(request)
+  if (denied) return denied
 
   let payload: unknown
   try {

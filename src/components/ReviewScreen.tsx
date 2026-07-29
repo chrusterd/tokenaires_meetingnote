@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ActionItem, MeetingRecord } from '../../shared/contract'
-import { UNSET } from '../../shared/contract'
+import { scheduleKindOf, SCHEDULE_KINDS, UNSET } from '../../shared/contract'
 
 const TEAM_MEMBERS = [UNSET, '소정', '하영', '해냄', '유진']
 type ReviewedActionItem = ActionItem & { 포함: boolean }
@@ -9,15 +9,17 @@ function StringListEditor({
   title,
   items,
   setItems,
+  caption,
 }: {
   title: string
   items: string[]
   setItems: (items: string[]) => void
+  caption?: string
 }) {
   return (
     <section className="review-section">
       <div className="section-heading">
-        <h2>{title}</h2>
+        <div><h2>{title}</h2>{caption && <p className="section-caption">{caption}</p>}</div>
         <button className="text-button" type="button" onClick={() => setItems([...items, ''])}>+ 항목 추가</button>
       </div>
       <div className="line-editor-list">
@@ -51,7 +53,7 @@ export function ReviewScreen({
 }) {
   const [핵심요약, set핵심요약] = useState(record.핵심_요약)
   const [결정사항, set결정사항] = useState(record.결정사항)
-  const [논의요약, set논의요약] = useState(record.논의_요약)
+  const [논의기록, set논의기록] = useState(record.논의_기록)
   const [항목들, set항목들] = useState<ReviewedActionItem[]>(
     record.액션아이템.map((item) => ({ ...item, 포함: true })),
   )
@@ -65,7 +67,7 @@ export function ReviewScreen({
       ...record,
       핵심_요약: 핵심요약.trim(),
       결정사항: 결정사항.map((item) => item.trim()).filter(Boolean),
-      논의_요약: 논의요약.map((item) => item.trim()).filter(Boolean),
+      논의_기록: 논의기록.map((item) => item.trim()).filter(Boolean),
       액션아이템: 항목들
         .filter((item) => item.포함 && item.할일.trim())
         .map(({ 포함: _included, ...item }) => ({ ...item, 할일: item.할일.trim() })),
@@ -92,7 +94,7 @@ export function ReviewScreen({
       <section className="review-section action-section">
         <div className="section-heading">
           <div><h2>액션 아이템</h2><p className="section-caption">체크 해제한 항목은 저장하지 않습니다.</p></div>
-          <button className="text-button" type="button" onClick={() => set항목들([...항목들, { 할일: '', 담당자: UNSET, 기한: UNSET, 포함: true }])}>+ 할 일 추가</button>
+          <button className="text-button" type="button" onClick={() => set항목들([...항목들, { 할일: '', 담당자: UNSET, 기한: UNSET, 유형: '팀 일정', 상태: '진행', 포함: true }])}>+ 할 일 추가</button>
         </div>
         <div className="action-list">
           {항목들.length === 0 && <p className="empty-inline">추출된 할 일이 없습니다. 필요하면 직접 추가하세요.</p>}
@@ -106,6 +108,9 @@ export function ReviewScreen({
               <select value={item.담당자} onChange={(event) => editAction(index, { 담당자: event.target.value })} aria-label="담당자">
                 {TEAM_MEMBERS.map((name) => <option key={name} value={name}>{name}</option>)}
               </select>
+              <select value={scheduleKindOf(item)} onChange={(event) => editAction(index, { 유형: event.target.value as ActionItem['유형'] })} aria-label="일정 구분">
+                {SCHEDULE_KINDS.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
+              </select>
               <label className="due-date"><span>기한</span><input type="date" value={item.기한 === UNSET ? '' : item.기한} onChange={(event) => editAction(index, { 기한: event.target.value || UNSET })} /></label>
               <button className="remove-button" type="button" onClick={() => set항목들(항목들.filter((_, itemIndex) => itemIndex !== index))} aria-label="할 일 삭제">×</button>
             </div>
@@ -113,7 +118,7 @@ export function ReviewScreen({
         </div>
       </section>
 
-      <StringListEditor title="논의 내용 요약" items={논의요약} setItems={set논의요약} />
+      <StringListEditor title="논의 기록" items={논의기록} setItems={set논의기록} caption="안건별 근거와 보류 내용까지 확인해 저장합니다." />
 
       <details className="source-details">
         <summary>원본 회의 메모 보기</summary>

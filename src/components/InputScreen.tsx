@@ -44,8 +44,8 @@ export function InputScreen({ onStructured }: { onStructured: (record: MeetingRe
   return (
     <section className="screen input-screen" aria-labelledby="input-title">
       <div className="screen-intro">
-        <p className="eyebrow">원본을 남기고, 결론을 꺼냅니다</p>
-        <h1 id="input-title">회의의 문장을<br />기록으로 바꾸세요.</h1>
+        <p className="eyebrow"><span>01</span> RAW MEMO</p>
+        <h1 id="input-title">MEETING<br />NOTES</h1>
         <p className="lede">메모를 그대로 붙여넣으면 핵심 내용과 할 일을 정리합니다. 저장 전에는 반드시 사람이 검토합니다.</p>
       </div>
 

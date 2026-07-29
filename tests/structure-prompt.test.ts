@@ -29,7 +29,7 @@ describe('parseModelResponse', () => {
 
 describe('SYSTEM_PROMPT', () => {
   it('한국어 계약 키를 그대로 담고 있다', () => {
-    for (const key of ['핵심_요약', '결정사항', '액션아이템', '논의_요약']) {
+    for (const key of ['핵심_요약', '결정사항', '액션아이템', '논의_기록']) {
       expect(SYSTEM_PROMPT).toContain(key)
     }
   })

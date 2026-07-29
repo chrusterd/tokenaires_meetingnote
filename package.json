@@ -12,6 +12,7 @@
     "roundtrip": "tsx scripts/notion-roundtrip.ts"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

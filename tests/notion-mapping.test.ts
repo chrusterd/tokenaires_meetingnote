@@ -21,17 +21,43 @@ describe('splitRichText', () => {
 describe('buildMeetingPage', () => {
   const page = buildMeetingPage(record, 'DB1') as any
 
-  it('제목을 "YYYY-MM-DD 회의록" 형식으로 만든다', () => {
-    expect(page.properties['제목'].title[0].text.content).toBe('2026-07-28 회의록')
+  it('회의명을 "YYYY-MM-DD 회의록" 형식으로 만든다', () => {
+    expect(page.properties['회의명'].title[0].text.content).toBe('2026-07-28 회의록')
   })
 
-  it('진행 상태는 rollup이므로 properties에 넣지 않는다', () => {
-    expect(page.properties['진행 상태']).toBeUndefined()
+  it('상태는 DB 기본값을 사용하므로 properties에 넣지 않는다', () => {
+    expect(page.properties['상태']).toBeUndefined()
   })
 
-  it('액션아이템은 본문에 넣지 않는다 (DB2로 감)', () => {
-    const text = JSON.stringify(page.children)
-    expect(text).not.toContain('Notion 액션아이템 DB 신설')
+  it('참석자를 본문 맨 위 섹션에 넣는다', () => {
+    const idx = page.children.findIndex(
+      (b: any) => b.type === 'heading_2' && b.heading_2.rich_text[0].text.content === '참석자',
+    )
+    expect(idx).toBeGreaterThan(-1)
+    expect(page.children[idx + 1].paragraph.rich_text[0].text.content).toBe('소정, 하영, 해냄, 유진')
+  })
+
+  it('액션아이템을 본문 표로도 넣는다 (원본은 여전히 DB2)', () => {
+    const table = page.children.find((b: any) => b.type === 'table')
+    expect(table.table.has_column_header).toBe(true)
+    const rows = table.table.children
+    expect(rows[0].table_row.cells.map((c: any) => c[0].text.content))
+      .toEqual(['구분', '담당자', '할 일', '기한', '상태'])
+    expect(rows[1].table_row.cells.map((c: any) => c[0].text.content))
+      .toEqual(['개인 일정', '소정', 'Notion 액션아이템 DB 신설', '2026-08-04', '진행'])
+  })
+
+  it('모든 행의 셀 개수가 table_width와 같다', () => {
+    const table = page.children.find((b: any) => b.type === 'table')
+    for (const row of table.table.children) {
+      expect(row.table_row.cells).toHaveLength(table.table.table_width)
+    }
+  })
+
+  it('액션아이템이 없으면 표 대신 안내 문단을 넣는다', () => {
+    const emptyPage = buildMeetingPage({ ...record, 액션아이템: [] }, 'DB1') as any
+    expect(emptyPage.children.find((b: any) => b.type === 'table')).toBeUndefined()
+    expect(JSON.stringify(emptyPage.children)).toContain('(액션 아이템 없음)')
   })
 
   it('전사문을 토글 블록 안에 넣는다', () => {
@@ -42,6 +68,14 @@ describe('buildMeetingPage', () => {
 
   it('children이 100블록을 넘지 않는다', () => {
     expect(page.children.length).toBeLessThanOrEqual(100)
+  })
+
+  it('논의 기록을 Notion 본문의 같은 이름 섹션에 넣는다', () => {
+    const headingIndex = page.children.findIndex(
+      (block: any) => block.type === 'heading_2' && block.heading_2.rich_text[0].text.content === '논의 기록',
+    )
+    expect(headingIndex).toBeGreaterThan(-1)
+    expect(JSON.stringify(page.children[headingIndex + 1])).toContain('오디오 업로드 용량 제한 문제')
   })
 
   it('2000자를 넘는 전사문도 한 블록의 rich_text 런에 걸쳐 전부 보존된다', () => {
@@ -66,11 +100,11 @@ describe('buildMeetingPage', () => {
     expect(JSON.stringify(toggle.toggle.children[1])).toContain('원본 길이')
   })
 
-  it('결정사항/논의_요약이 블록 예산을 넘어도 전사문 토글은 살아남는다', () => {
+  it('결정사항/논의 기록이 블록 예산을 넘어도 전사문 토글은 살아남는다', () => {
     const bigRecord: MeetingRecord = {
       ...record,
       결정사항: Array.from({ length: 60 }, (_, i) => `결정 ${i}`),
-      논의_요약: Array.from({ length: 60 }, (_, i) => `논의 ${i}`),
+      논의_기록: Array.from({ length: 60 }, (_, i) => `논의 ${i}`),
     }
     const bigPage = buildMeetingPage(bigRecord, 'DB1') as any
     const toggle = bigPage.children.find((b: any) => b.type === 'toggle')
@@ -82,10 +116,11 @@ describe('buildMeetingPage', () => {
     const bigRecord: MeetingRecord = {
       ...record,
       결정사항: Array.from({ length: 60 }, (_, i) => `결정 ${i}`),
-      논의_요약: Array.from({ length: 60 }, (_, i) => `논의 ${i}`),
+      논의_기록: Array.from({ length: 60 }, (_, i) => `논의 ${i}`),
     }
     const bigPage = buildMeetingPage(bigRecord, 'DB1') as any
     expect(bigPage.children.length).toBeLessThanOrEqual(100)
+    expect(JSON.stringify(bigPage.children)).toContain('논의 59')
   })
 })
 

@@ -1,5 +1,6 @@
 import type { Config } from '@netlify/functions'
 import { notionFetch } from './_lib/notion'
+import { requireSitePassword } from './_lib/access'
 
 type PropertyReference = {
   id?: string
@@ -71,6 +72,8 @@ async function dashboardItemFromPage(page: NotionPage): Promise<DashboardItem> {
 
 export default async (request: Request) => {
   if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 })
+  const denied = requireSitePassword(request)
+  if (denied) return denied
 
   const actionsDatabaseId = process.env.NOTION_ACTIONS_DB?.trim()
   if (!actionsDatabaseId) {
