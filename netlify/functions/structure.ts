@@ -24,6 +24,7 @@ const MEETING_STRUCTURE_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   properties: {
+    제목: { type: 'string', description: '회의 핵심 내용을 10~15자 내외로 압축한 짧은 제목. 명사구로 작성.' },
     핵심_요약: { type: 'string', description: '회의 전체의 핵심을 3줄 이내로 요약한 문자열' },
     안건_태그: {
       type: 'array',
@@ -49,7 +50,7 @@ const MEETING_STRUCTURE_SCHEMA = {
     },
     논의_기록: { type: 'array', items: { type: 'string' }, description: '회의에서 논의된 모든 주제와 근거를 안건별로 보존한 기록' },
   },
-  required: ['핵심_요약', '안건_태그', '결정사항', '액션아이템', '논의_기록'],
+  required: ['제목', '핵심_요약', '안건_태그', '결정사항', '액션아이템', '논의_기록'],
 } as const
 
 async function callGroq(text: string): Promise<string> {
@@ -139,6 +140,7 @@ export default async (request: Request) => {
         날짜,
         참석자: 참석자 ?? [],
         안건_태그: modelRecord.안건_태그 ?? [],
+        제목: modelRecord.제목 ?? '',
         핵심_요약: modelRecord.핵심_요약 ?? '',
         결정사항: modelRecord.결정사항 ?? [],
         액션아이템: modelRecord.액션아이템 ?? [],

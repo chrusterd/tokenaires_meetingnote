@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import type { ActionItem, MeetingRecord } from '../../shared/contract'
-import { scheduleKindOf, SCHEDULE_KINDS, UNSET } from '../../shared/contract'
+import { MEETING_STATUSES, scheduleKindOf, SCHEDULE_KINDS, UNSET } from '../../shared/contract'
 
 const TEAM_MEMBERS = [UNSET, '소정', '하영', '해냄', '유진']
 type ReviewedActionItem = ActionItem & { 포함: boolean }
+
+/** "2026-07-29" → "7/29". Notion 회의명 미리보기에 쓰는 짧은 날짜 표기. */
+function shortDate(날짜: string): string {
+  const match = 날짜.match(/^\d{4}-(\d{2})-(\d{2})$/)
+  if (!match) return 날짜
+  return `${Number(match[1])}/${Number(match[2])}`
+}
 
 function StringListEditor({
   title,
@@ -51,6 +58,8 @@ export function ReviewScreen({
   onBack: () => void
   isSaving: boolean
 }) {
+  const [제목, set제목] = useState(record.제목)
+  const [상태, set상태] = useState(record.상태)
   const [핵심요약, set핵심요약] = useState(record.핵심_요약)
   const [결정사항, set결정사항] = useState(record.결정사항)
   const [논의기록, set논의기록] = useState(record.논의_기록)
@@ -65,6 +74,8 @@ export function ReviewScreen({
   const approve = () => {
     onApprove({
       ...record,
+      제목: 제목.trim(),
+      상태,
       핵심_요약: 핵심요약.trim(),
       결정사항: 결정사항.map((item) => item.trim()).filter(Boolean),
       논의_기록: 논의기록.map((item) => item.trim()).filter(Boolean),
@@ -83,6 +94,17 @@ export function ReviewScreen({
         </div>
         <div className="source-badge"><span aria-hidden="true">●</span> 원문 연결됨</div>
       </div>
+
+      <section className="review-section summary-section">
+        <div className="section-heading"><h2>제목</h2><span className="section-caption">Notion 회의명에 "[{shortDate(record.날짜)}] {제목 || '제목'}"으로 저장됩니다</span></div>
+        <input type="text" value={제목} onChange={(event) => set제목(event.target.value)} aria-label="제목" />
+        <label className="field-label" htmlFor="review-status">
+          <span>상태</span>
+          <select id="review-status" value={상태} onChange={(event) => set상태(event.target.value as MeetingRecord['상태'])}>
+            {MEETING_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        </label>
+      </section>
 
       <section className="review-section summary-section">
         <div className="section-heading"><h2>핵심 요약</h2><span className="section-caption">Notion 회의록에 저장됩니다</span></div>
