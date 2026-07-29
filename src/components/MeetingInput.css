@@ -1,10 +1,6 @@
 /* The three capture modes stay inside the original meeting-note form. */
 .meeting-input-form { margin-top: 46px; }
 .mi-source { margin-top: 27px; }
-.mi-source-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.mi-source-heading h2 { margin: 0; color: var(--ink); font: 800 0.86rem/1.2 var(--body); letter-spacing: -0.02em; }
-.mi-source-heading p { margin: 6px 0 0; color: var(--muted); font-size: 0.78rem; }
-.mi-source-heading > span { flex: none; padding: 5px 8px; border: 1.5px solid var(--ink); border-radius: 999px; color: var(--ink); font: 800 0.6rem/1 var(--body); letter-spacing: 0.12em; }
 
 .mi-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
 .mi-tab { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 7px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font: 800 0.75rem/1 var(--body); cursor: pointer; }
@@ -38,8 +34,6 @@
 @keyframes mi-record-pulse { 50% { transform: scale(1.15); } }
 
 @media (max-width: 680px) {
-  .mi-source-heading { align-items: flex-start; }
-  .mi-source-heading > span { display: none; }
   .mi-tabs { gap: 5px; }
   .mi-tab { min-height: 39px; font-size: 0.7rem; }
   .mi-upload, .mi-record, .mi-textarea { min-height: 230px; }

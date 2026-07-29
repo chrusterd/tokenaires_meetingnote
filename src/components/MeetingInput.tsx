@@ -47,7 +47,7 @@ export default function MeetingInput({ onStructured }: Props) {
 
   // 메타 — 구조화 API와 Notion 본문 '참석자' 섹션이 둘 다 쓴다.
   const [날짜, set날짜] = useState(todayInKorea)
-  const [참석자, set참석자] = useState<string[]>([])
+  const [참석자, set참석자] = useState<string[]>(TEAM_MEMBERS)
 
   // 메모
   const [memo, setMemo] = useState('')
@@ -164,7 +164,6 @@ export default function MeetingInput({ onStructured }: Props) {
   return (
     <section className="screen input-screen" aria-labelledby="input-title">
       <div className="screen-intro">
-        <p className="eyebrow"><span>01</span> RAW MEMO</p>
         <h1 id="input-title">MEETING<br />NOTES</h1>
         <p className="lede">메모를 그대로 붙여넣거나, 회의 녹음을 올리거나, 바로 녹음하세요. 저장 전에는 반드시 사람이 검토합니다.</p>
       </div>
@@ -188,11 +187,7 @@ export default function MeetingInput({ onStructured }: Props) {
           </fieldset>
         </div>
 
-        <section className="mi-source" aria-labelledby="input-mode-title">
-          <div className="mi-source-heading">
-            <div><h2 id="input-mode-title">원본 회의 메모</h2><p>입력 방식을 선택해 회의 내용을 남기세요.</p></div>
-            <span>INPUT MODE</span>
-          </div>
+        <section className="mi-source" aria-label="원본 회의 메모">
           <div className="mi-tabs" role="tablist" aria-label="회의 내용 입력 방식">
             {TABS.map((item) => (
               <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} className={`mi-tab ${tab === item.id ? 'is-active' : ''}`} onClick={() => setTab(item.id)}>
