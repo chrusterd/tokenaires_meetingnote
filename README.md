@@ -10,6 +10,8 @@ json_schema를 지원하는 Groq 모델은 gpt-oss 계열뿐입니다.
 
 ## 시작하기
 
+처음 참여하는 경우 [CONTRIBUTING.md](CONTRIBUTING.md)의 설정 가이드를 먼저 읽어주세요. 환경 변수 중 어떤 값을 각자 발급하고 어떤 값을 팀에서 공유하는지, 커밋 이메일을 어떻게 설정하는지 정리되어 있습니다.
+
 ```powershell
 npm install
 npm test
