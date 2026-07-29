@@ -314,7 +314,7 @@ export async function readNotionMeetingRecord(page: NotionMeetingPage): Promise<
     안건_태그: page.안건_태그,
     제목,
     상태: page.상태,
-    핵심_요약: page.핵심_요약 || page.제목 || `${page.날짜} 회의록`,
+    핵심_요약: page.핵심_요약 || 제목 || `${page.날짜} 회의록`,
     결정사항,
     액션아이템,
     논의_기록,
