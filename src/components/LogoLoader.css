@@ -1,0 +1,52 @@
+/* 대기 화면은 로고 영상 하나를 공용으로 쓰고, 크기만 상황에 따라 바꾼다. */
+.logo-loader { display: block; width: 100%; max-width: 100%; height: auto; }
+
+.loading-overlay { position: fixed; inset: 0; z-index: 40; display: grid; padding: 24px; place-items: center; background: color-mix(in srgb, var(--fog) 84%, transparent); backdrop-filter: blur(4px); animation: loading-overlay-in 200ms ease both; }
+.loading-overlay-card { display: grid; width: min(100%, 390px); padding: 30px 30px 28px; justify-items: center; gap: 16px; border: 2px solid var(--ink); border-radius: 32px; background: var(--paper); text-align: center; animation: loading-card-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.loading-overlay-card h2 { color: var(--ink); font: 600 1.4rem/1.15 var(--display); letter-spacing: -0.05em; }
+.loading-overlay-card p { max-width: 290px; color: var(--muted); font-size: 0.82rem; line-height: 1.55; }
+.loading-overlay-card .logo-loader { width: 132px; }
+
+/* 회의록 입력 카드는 화면을 덮지 않고 카드 안에서만 대기 상태로 바뀐다. */
+.mi-busy { position: absolute; inset: 0; z-index: 3; display: grid; padding: 28px; justify-items: center; align-content: center; gap: 14px; border-radius: 30px; background: color-mix(in srgb, var(--paper) 92%, transparent); backdrop-filter: blur(3px); animation: loading-overlay-in 200ms ease both; }
+.mi-busy .logo-loader { width: 118px; }
+.mi-busy-status { color: var(--ink); font: 600 1.12rem/1.2 var(--display); letter-spacing: -0.04em; }
+.mi-busy .loading-bar { width: min(100%, 300px); }
+.mi-busy-meta { display: flex; gap: 9px; align-items: center; color: var(--muted); font-size: 0.75rem; font-weight: 700; }
+.mi-busy-meta time { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.loading-bar { overflow: hidden; width: min(100%, 260px); height: 7px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); }
+.loading-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--signal); }
+.loading-bar.is-indeterminate > span { width: 36%; animation: loading-bar-slide 1.3s ease-in-out infinite; }
+.loading-bar.is-determinate > span { transition: width 320ms ease; }
+
+/* 목록을 처음 불러오는 동안에는 실제 행과 같은 자리를 잡아둔다. */
+.skeleton-list { display: grid; gap: 12px; margin: 32px 0 0; padding: 0; list-style: none; }
+.skeleton-item { display: grid; grid-template-columns: 116px minmax(0, 1fr) 96px; gap: 20px; align-items: center; padding: 24px 20px; border: 2px solid var(--line); border-radius: 22px; background: var(--paper); }
+.skeleton-lines { display: grid; gap: 9px; }
+.skeleton-line { height: 12px; border-radius: 999px; background: linear-gradient(100deg, var(--mist) 12%, #e2e2da 38%, var(--mist) 64%); background-size: 260% 100%; animation: skeleton-sweep 1.5s linear infinite; }
+.skeleton-line.is-title { height: 15px; }
+.skeleton-line.is-half { width: 58%; }
+.skeleton-line.is-third { width: 34%; }
+
+.dot-pulse { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.dot-pulse i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: dot-pulse-fade 900ms ease-in-out infinite; }
+.dot-pulse i:nth-child(2) { animation-delay: 150ms; }
+.dot-pulse i:nth-child(3) { animation-delay: 300ms; }
+
+/* 행 단위 반영은 카드 위쪽에 얇은 진행 줄로만 알린다. */
+.schedule-card[aria-busy='true'] { position: relative; overflow: hidden; }
+.schedule-card[aria-busy='true']::after { content: ''; position: absolute; top: 0; left: 0; width: 40%; height: 3px; background: var(--signal); animation: loading-bar-slide 1.3s ease-in-out infinite; }
+
+@keyframes loading-overlay-in { from { opacity: 0; } }
+@keyframes loading-card-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } }
+@keyframes loading-bar-slide { from { transform: translateX(-105%); } to { transform: translateX(305%); } }
+@keyframes skeleton-sweep { from { background-position: 160% 0; } to { background-position: -60% 0; } }
+@keyframes dot-pulse-fade { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+@media (max-width: 680px) {
+  .loading-overlay-card { padding: 26px 22px 24px; border-radius: 26px; }
+  .loading-overlay-card .logo-loader { width: 112px; }
+  .mi-busy { padding: 20px; border-radius: 22px; }
+  .skeleton-item { grid-template-columns: 1fr; gap: 12px; padding: 18px; border-radius: 18px; }
+}

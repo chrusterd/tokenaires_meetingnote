@@ -1,13 +1,15 @@
 import type { SavedMeeting } from '../meeting-history'
+import { DotPulse, SkeletonList } from './LogoLoader'
 
 type MeetingHistoryProps = {
   meetings: SavedMeeting[]
+  isLoading: boolean
   onOpen: (meeting: SavedMeeting) => void
   onDelete: (meeting: SavedMeeting) => void
   deletingId: string
 }
 
-export function MeetingHistory({ meetings, onOpen, onDelete, deletingId }: MeetingHistoryProps) {
+export function MeetingHistory({ meetings, isLoading, onOpen, onDelete, deletingId }: MeetingHistoryProps) {
   return (
     <section className="screen history-screen" aria-labelledby="history-title">
       <div className="dashboard-heading">
@@ -15,7 +17,9 @@ export function MeetingHistory({ meetings, onOpen, onDelete, deletingId }: Meeti
         <p className="history-count">최근 {meetings.length}개</p>
       </div>
 
-      {meetings.length === 0 ? (
+      {isLoading && meetings.length === 0 ? (
+        <SkeletonList label="회의록을 불러오는 중" />
+      ) : meetings.length === 0 ? (
         <div className="history-empty">
           <span aria-hidden="true">+</span>
           <p>아직 사이트에 보관된 회의록이 없습니다.</p>
@@ -40,7 +44,7 @@ export function MeetingHistory({ meetings, onOpen, onDelete, deletingId }: Meeti
                   disabled={deletingId === meeting.id}
                   aria-label={`${meeting.record.날짜} 회의록 삭제`}
                 >
-                  {deletingId === meeting.id ? '삭제 중…' : '삭제'}
+                  {deletingId === meeting.id ? <>삭제 중<DotPulse /></> : '삭제'}
                 </button>
               </div>
             </li>

@@ -9,6 +9,7 @@ import {
 } from '../../shared/contract'
 import type { SharedActionPatch } from '../api'
 import type { SavedMeeting } from '../meeting-history'
+import { DotPulse, SkeletonList } from './LogoLoader'
 
 type ScheduledAction = ActionItem & {
   id: string
@@ -91,7 +92,7 @@ function ScheduleCard({
   }
 
   return (
-    <li className={`schedule-card ${completed ? 'is-complete' : ''}`}>
+    <li className={`schedule-card ${completed ? 'is-complete' : ''}`} aria-busy={isMutating}>
       <button
         className="schedule-check"
         type="button"
@@ -141,7 +142,7 @@ function ScheduleCard({
           </label>
           <div className="schedule-editor-actions">
             <button className="secondary-button" type="button" onClick={() => setEditing(false)} disabled={isMutating}>취소</button>
-            <button className="primary-button" type="submit" disabled={isMutating || !draft.할일.trim()}>{isMutating ? '반영 중…' : '변경 저장'}</button>
+            <button className="primary-button" type="submit" disabled={isMutating || !draft.할일.trim()}>{isMutating ? <>반영 중<DotPulse /></> : '변경 저장'}</button>
           </div>
         </form>
       )}
@@ -232,7 +233,7 @@ export function ScheduleBoard({
           <p className="schedule-lede">회의 뒤에 남은 행동과, 팀이 함께 확인할 다음 계획입니다.</p>
         </div>
         <button className="secondary-button" type="button" onClick={onRefresh} disabled={isRefreshing}>
-          {isRefreshing ? '불러오는 중…' : '새로고침'}
+          {isRefreshing ? <>불러오는 중<DotPulse /></> : '새로고침'}
         </button>
       </div>
 
@@ -243,7 +244,7 @@ export function ScheduleBoard({
       </div>
 
       {isRefreshing && items.length === 0 ? (
-        <div className="schedule-empty"><span aria-hidden="true">…</span><p>회의록의 일정을 불러오고 있습니다.</p></div>
+        <SkeletonList label="회의록의 일정을 불러오는 중" />
       ) : items.length === 0 ? (
         <div className="schedule-empty"><span aria-hidden="true">+</span><p>아직 정리된 일정이 없습니다.</p><small>회의록을 저장하면 담당자와 기한이 이곳에 자연스럽게 모입니다.</small></div>
       ) : (

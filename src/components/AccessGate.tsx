@@ -1,14 +1,20 @@
 import { useState } from 'react'
 import { unlockSite } from '../api'
 
-export function AccessGate({ onUnlocked }: { onUnlocked: () => void }) {
+export function AccessGate({ onCheckingChange, onUnlocked }: { onCheckingChange: (checking: boolean) => void; onUnlocked: () => void }) {
   const [password, setPassword] = useState('')
   const [isChecking, setIsChecking] = useState(false)
   const [error, setError] = useState('')
 
+  // 확인 중 표시는 버튼과 화면 전체 로더가 함께 쓰므로 상태를 바깥에도 알린다.
+  const markChecking = (checking: boolean) => {
+    setIsChecking(checking)
+    onCheckingChange(checking)
+  }
+
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setIsChecking(true)
+    markChecking(true)
     setError('')
     try {
       await unlockSite(password)
@@ -16,7 +22,7 @@ export function AccessGate({ onUnlocked }: { onUnlocked: () => void }) {
     } catch (unlockError) {
       setError((unlockError as Error).message)
     } finally {
-      setIsChecking(false)
+      markChecking(false)
     }
   }
 
