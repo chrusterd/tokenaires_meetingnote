@@ -40,18 +40,22 @@ const tableRow = (cells: string[]) => ({
 })
 
 // 이 표는 사이트의 Schedule과 같은 액션 아이템을 회의록 안에서도 바로 읽게 한다.
+// 완료된 일정은 상태 칸에 체크 표시를 붙여, 끝난 일임을 표에서 바로 알 수 있게 한다.
 export function buildActionTable(items: ActionItem[]): object[] {
   if (!items.length) return [paragraph('(액션 아이템 없음)')]
 
   const rows = items
     .slice(0, MAX_CHILDREN - 1) // 헤더 행 한 줄을 뺀 나머지가 예산이다
-    .map((item) => tableRow([
-      scheduleKindOf(item),
-      item.담당자,
-      item.할일,
-      item.기한,
-      scheduleStatusOf(item),
-    ]))
+    .map((item) => {
+      const completed = scheduleStatusOf(item) === '완료'
+      return tableRow([
+        scheduleKindOf(item),
+        item.담당자,
+        item.할일,
+        item.기한,
+        completed ? `✅ ${scheduleStatusOf(item)}` : scheduleStatusOf(item),
+      ])
+    })
 
   return [{
     object: 'block', type: 'table',

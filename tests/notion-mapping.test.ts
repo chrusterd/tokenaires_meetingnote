@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildMeetingPage, buildActionItemPage, splitRichText } from '../netlify/functions/_lib/notion-mapping'
+import { buildMeetingPage, buildActionItemPage, buildActionTable, splitRichText } from '../netlify/functions/_lib/notion-mapping'
 import dummy from '../fixtures/dummy-meeting.json'
 import type { MeetingRecord } from '../shared/contract'
 
@@ -135,6 +135,19 @@ describe('buildMeetingPage', () => {
     const bigPage = buildMeetingPage(bigRecord, 'DB1', SAVED_AT) as any
     expect(bigPage.children.length).toBeLessThanOrEqual(100)
     expect(JSON.stringify(bigPage.children)).toContain('논의 59')
+  })
+})
+
+describe('buildActionTable', () => {
+  it('완료된 일정은 상태 칸에 체크 표시를 붙인다', () => {
+    const table = buildActionTable([
+      { 할일: '진행 중 항목', 담당자: '소정', 기한: '2026-08-04', 상태: '진행' },
+      { 할일: '끝난 항목', 담당자: '하영', 기한: '2026-08-01', 상태: '완료' },
+    ]) as any[]
+    const [, activeRow, doneRow] = table[0].table.children
+
+    expect(activeRow.table_row.cells[4][0].text.content).toBe('진행')
+    expect(doneRow.table_row.cells[4][0].text.content).toBe('✅ 완료')
   })
 })
 

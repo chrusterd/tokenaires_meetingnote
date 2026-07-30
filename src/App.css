@@ -35,7 +35,6 @@ h2, h3, p { margin: 0; }
 .input-screen .lede { max-width: 540px; padding-left: 15px; border-left: 2px solid var(--line-dark); }
 
 .meeting-form { position: relative; margin-top: 54px; padding: 29px 28px 28px; border: 1px solid var(--line-dark); border-top: 4px solid var(--ink); background: var(--paper); box-shadow: 9px 9px 0 #dfe9eb; }
-.meeting-form::before { content: 'RAW INPUT'; position: absolute; top: 0; right: 24px; padding: 4px 8px; color: var(--muted); background: var(--fog); font: 800 0.62rem/1 var(--body); letter-spacing: 0.12em; transform: translateY(-50%); }
 .form-row { display: grid; gap: 30px; }
 .metadata-row { grid-template-columns: 185px 1fr; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
 .field-label, .attendee-fieldset { display: flex; flex-direction: column; gap: 9px; min-width: 0; color: var(--ink); font-size: 0.86rem; font-weight: 800; letter-spacing: -0.02em; }
@@ -139,7 +138,6 @@ footer { padding: 28px 0 34px; border-top: 1px solid var(--line); color: var(--m
   main { padding: 30px 0 56px; }
   h1 { letter-spacing: -0.08em; }
   .meeting-form { margin-top: 34px; padding: 22px 18px 18px; box-shadow: 5px 5px 0 #dfe9eb; }
-  .meeting-form::before { right: 14px; }
   .metadata-row { grid-template-columns: 1fr; gap: 20px; }
   .form-footer, .screen-actions { align-items: stretch; flex-direction: column-reverse; }
   .primary-button, .secondary-button { justify-content: center; }
@@ -185,7 +183,6 @@ h1 { font-weight: 600; letter-spacing: -0.055em; }
 .lede, .input-screen .lede { max-width: 560px; padding-left: 0; border-left: 0; font-size: 1rem; line-height: 1.7; }
 
 .meeting-form { margin-top: 46px; padding: 32px; border: 2px solid var(--ink); border-top: 2px solid var(--ink); border-radius: 32px; box-shadow: none; }
-.meeting-form::before { top: 0; right: 28px; padding: 4px 9px; color: var(--ink); border: 1.5px solid var(--ink); border-radius: 999px; background: var(--paper); font-size: 0.6rem; transform: translateY(-50%); }
 .metadata-row { gap: 36px; padding-bottom: 27px; }
 .field-label, .attendee-fieldset { font-size: 0.83rem; }
 input, textarea, select { border: 1.5px solid var(--ink); border-radius: 12px; font-size: 0.94rem; }
