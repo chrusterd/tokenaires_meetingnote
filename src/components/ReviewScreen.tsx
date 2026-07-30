@@ -82,8 +82,8 @@ export function ReviewScreen({
     <section className="screen review-screen" aria-labelledby="review-title">
       <div className="review-header">
         <div>
-          <p className="eyebrow">사람의 검토가 마지막 단계입니다</p>
-          <h1 id="review-title">기록을 읽고,<br />필요한 만큼 고치세요.</h1>
+          <p className="eyebrow">검토 단계</p>
+          <h1 id="review-title">회의 정리</h1>
         </div>
         <div className="source-badge"><span aria-hidden="true">●</span> 원문 연결됨</div>
       </div>
