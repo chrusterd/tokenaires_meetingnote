@@ -28,7 +28,6 @@
 .mi-record-actions { display: grid; justify-items: center; gap: 16px; }
 .record-stop { min-height: 46px; padding: 12px 18px; border: 2px solid var(--signal); border-radius: 999px; background: var(--signal); color: white; font: 800 0.78rem/1 var(--body); cursor: pointer; }
 .mi-audio { width: min(100%, 330px); height: 38px; }
-.mi-status { margin: 16px 0 0; color: var(--muted); font-size: 0.8rem; }
 .mi-error { margin-top: 16px; }
 
 @keyframes mi-record-pulse { 50% { transform: scale(1.15); } }

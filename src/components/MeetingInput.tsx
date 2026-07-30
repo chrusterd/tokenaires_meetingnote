@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import type { MeetingRecord } from '../../shared/contract'
 import { structure, transcribeChunk } from '../api'
 import { decodeToMono, splitIntoWavChunks } from '../audio'
+import { useElapsedSeconds } from '../loading'
+import { LoadingBar, LogoLoader } from './LogoLoader'
 import './MeetingInput.css'
 
 /** 세 가지 입력 방식이 만들어내는 결과. 어느 쪽이든 전사문 한 덩어리로 수렴한다. */
@@ -66,8 +68,11 @@ export default function MeetingInput({ onStructured }: Props) {
 
   // 처리
   const [status, setStatus] = useState('')
+  // 전사는 조각 수를 미리 아는 유일한 단계다. 그때만 진행률이 실제 숫자를 갖는다.
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [error, setError] = useState('')
   const busy = status !== ''
+  const busySeconds = useElapsedSeconds(busy)
 
   const toggleAttendee = (name: string) => {
     set참석자((current) => current.includes(name)
@@ -134,9 +139,11 @@ export default function MeetingInput({ onStructured }: Props) {
     const wavChunks = splitIntoWavChunks(samples)
 
     const parts: string[] = []
+    setProgress({ done: 0, total: wavChunks.length })
     for (const [index, wav] of wavChunks.entries()) {
       setStatus(`받아쓰는 중… (${index + 1}/${wavChunks.length})`)
       parts.push(await transcribeChunk(wav))
+      setProgress({ done: index + 1, total: wavChunks.length })
     }
 
     const transcript = parts.filter(Boolean).join('\n').trim()
@@ -153,11 +160,13 @@ export default function MeetingInput({ onStructured }: Props) {
     try {
       const 텍스트 = await toTranscript(input)
       setStatus('회의록으로 정리하는 중…')
+      setProgress(null)
       onStructured(await structure({ 텍스트, 날짜, 참석자 }))
     } catch (submitError) {
       setError((submitError as Error).message)
     } finally {
       setStatus('')
+      setProgress(null)
     }
   }
 
@@ -226,7 +235,18 @@ export default function MeetingInput({ onStructured }: Props) {
           </button>
         </div>
 
-        {status && <p className="mi-status" role="status">{status}</p>}
+        {busy && (
+          <div className="mi-busy" role="status" aria-live="polite">
+            <LogoLoader />
+            <p className="mi-busy-status">{status}</p>
+            <LoadingBar ratio={progress ? progress.done / progress.total : undefined} />
+            <p className="mi-busy-meta">
+              <span>{progress ? `${progress.done}/${progress.total} 조각 완료` : '조금 걸릴 수 있습니다'}</span>
+              <span aria-hidden="true">·</span>
+              <time>{formatTime(busySeconds)}</time>
+            </p>
+          </div>
+        )}
         {error && <p className="form-error mi-error" role="alert">{error}</p>}
       </section>
     </section>
